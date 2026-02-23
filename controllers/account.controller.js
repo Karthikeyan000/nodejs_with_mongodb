@@ -25,6 +25,48 @@ const getAllAccounts = async (req, res) => {
   }
 };
 
+
+// READ With Aggregate
+const getAggregateAccounts = async (req, res) => {
+  try {
+    const pipeline = [
+      {
+        $match:{
+          age: { $gte: 20 }
+        }
+      },
+      {
+        $group:{
+          _id:"$name",
+          totalCount:{$count:{}},
+          totalAccounts:{$sum:"$age"},
+          totalAverageAge:{$avg:"$age"}
+        }
+      },
+      {
+        $sort:{
+          totalCount:-1
+        },
+      },
+      {
+        $project:{
+          _id:0,
+          name:"$_id",
+          totalCount:1,
+          totalAccounts:1,
+          totalAverageAge:1
+        }
+      }
+    ]
+    const accounts = await getCollection().aggregate(pipeline).toArray();
+    console.log(accounts,"::accounts")
+    res.status(200).json(accounts);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // UPDATE
 const updateAccount = async (req, res) => {
   try {
@@ -68,4 +110,5 @@ module.exports = {
   getAllAccounts,
   updateAccount,
   deleteAccount,
+  getAggregateAccounts
 };
